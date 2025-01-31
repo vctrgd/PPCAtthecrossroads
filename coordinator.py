@@ -2,6 +2,11 @@ import sysv_ipc
 import threading
 import time
 from vehicle import Vehicle
+import signal
+import lights
+import os
+
+
 def process_single_queue(mq, direction, lights_dict, lights_pid):
     """Traite les véhicules d'une file si le feu est vert."""
     traffic_rules = {
@@ -18,9 +23,12 @@ def process_single_queue(mq, direction, lights_dict, lights_pid):
             vehicle_id, source, destination, is_priority, is_waiting = vehicle_info
             is_priority = is_priority.lower() == "true" if isinstance(is_priority, str) else is_priority
             vehicle = Vehicle(vehicle_id, is_priority, source, destination, is_waiting)
-            vehicleStack.append(vehicle)            
-            if vehicle.isPriority==True:
-                print(vehicle.isPriority)
+            vehicleStack.append(vehicle) 
+            if vehicle.isPriority==True and traffic_rules[vehicle.source]=="northsouth":
+                os.kill(lights_pid, signal.SIGUSR1)
+            elif vehicle.isPriority==True and traffic_rules[vehicle.source]=="eastwest":
+                os.kill(lights_pid, signal.SIGUSR2)
+                
         except sysv_ipc.BusyError:
             pass  # Pas de véhicule pour l'instant
         if lights_dict[traffic_rules[direction]]:  # Vérifie si le feu est vert

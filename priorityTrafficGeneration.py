@@ -5,6 +5,7 @@ import sysv_ipc
 import signal
 import time
 from vehicle import Vehicle
+import lights
 
 def priorityTrafficGenerator(mq: sysv_ipc.MessageQueue, source, currentId, lock):
     while True:
@@ -29,4 +30,5 @@ def generateVehicle(source, currentId, lock) -> Vehicle:
         currentId.value += 1
     
     vehicle: Vehicle = Vehicle(vehicle_id, True, source, destination, True)
+
     return vehicle
