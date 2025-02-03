@@ -6,6 +6,7 @@ import normalTrafficGeneration
 import priorityTrafficGeneration 
 import coordinator
 import lights
+import display
 
 # Créer une nouvelle MessageQueue (clé unique)
 mqNorth = sysv_ipc.MessageQueue(1, sysv_ipc.IPC_CREAT)
@@ -35,6 +36,11 @@ if __name__ == "__main__":
     # Créer un entier partagé pour currentId, initialisé à 0
     currentId = multiprocessing.Value("i", 0)
 
+    display_process = multiprocessing.Process(target=display.run_display)
+    display_process.start()
+    time.sleep(3) 
+
+
     lights_process = multiprocessing.Process(target=lights.manage_lights, args=(lights_dict,))
     lights_process.start()
 
@@ -42,7 +48,8 @@ if __name__ == "__main__":
     read_process = multiprocessing.Process(target=coordinator.coordinate, args=(mqList,lights_dict,lights_process.pid))
     read_process.start()
     
-    
+  
+
     # Démarrer les générateurs de trafic avec currentId et le verrou partagés
     normal_traffic_process_north = multiprocessing.Process(target=normalTrafficGeneration.normalTrafficGenerator, args=(mqNorth, "North", currentId, lockCurrentId))
     normal_traffic_process_south = multiprocessing.Process(target=normalTrafficGeneration.normalTrafficGenerator, args=(mqSouth, "South", currentId, lockCurrentId))
@@ -53,8 +60,8 @@ if __name__ == "__main__":
     priority_traffic_process_south = multiprocessing.Process(target=priorityTrafficGeneration.priorityTrafficGenerator, args=(mqSouth, "South", currentId, lockCurrentId))
     priority_traffic_process_east = multiprocessing.Process(target=priorityTrafficGeneration.priorityTrafficGenerator, args=(mqEast, "East", currentId, lockCurrentId))
     priority_traffic_process_west = multiprocessing.Process(target=priorityTrafficGeneration.priorityTrafficGenerator, args=(mqWest, "West", currentId, lockCurrentId))
-
-
+    
+    
     normal_traffic_process_north.start()
     normal_traffic_process_south.start()
     normal_traffic_process_east.start()
@@ -64,7 +71,7 @@ if __name__ == "__main__":
     priority_traffic_process_east.start()
     priority_traffic_process_west.start()
     
-    # Exécution pendant 10 secondes
+    # Exécution pendant 30 secondes
     time.sleep(10)
 
     # Terminer les processus proprement
@@ -98,4 +105,6 @@ if __name__ == "__main__":
     read_process.terminate()
     read_process.join()
     
+    display_process.terminate()
+    display_process.join()
     manager.shutdown()
