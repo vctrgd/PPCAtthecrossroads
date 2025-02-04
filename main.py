@@ -28,6 +28,7 @@ clear_queues(mqList)
 
 if __name__ == "__main__":
     
+
     manager = multiprocessing.Manager()
     lights_dict = manager.dict({"northsouth": True, "eastwest": False})    
     # Créer un verrou partagé pour synchroniser l'accès à currentId
@@ -71,7 +72,6 @@ if __name__ == "__main__":
     priority_traffic_process_east.start()
     priority_traffic_process_west.start()
     
-    # Exécution pendant 30 secondes
     time.sleep(10)
 
     # Terminer les processus proprement

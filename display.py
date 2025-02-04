@@ -9,6 +9,7 @@ class TrafficDisplay:
         master.title("Traffic Simulation")
         self.canvas = tk.Canvas(master, width=800, height=600, bg='lightgray')
         self.canvas.pack()
+        self.draw_traffic_lights()
         
         self.draw_roads()
         self.vehicles = {}  # Dictionnaire des véhicules {id: rectangle}
@@ -49,19 +50,45 @@ class TrafficDisplay:
         # Rue verticale
         self.canvas.create_line(400, 0, 400, 600, width=8, fill='darkgray')
 
+    def draw_traffic_lights(self):
+        self.traffic_lights = {
+            'north': self.canvas.create_oval(390, 50, 410, 70, fill='red'),
+            'south': self.canvas.create_oval(390, 530, 410, 550, fill='red'),
+            'east': self.canvas.create_oval(730, 290, 750, 310, fill='red'),
+            'west': self.canvas.create_oval(50, 290, 70, 310, fill='red')
+        }
+    
+    def update_traffic_lights(self, ns_green, ew_green):
+        colors = {
+            'north': 'green' if ns_green else 'red',
+            'south': 'green' if ns_green else 'red',
+            'east': 'green' if ew_green else 'red',
+            'west': 'green' if ew_green else 'red'
+        }
+        for light, color in colors.items():
+            self.canvas.itemconfig(self.traffic_lights[light], fill=color)
+
+
 
     def process_message(self, msg):
         # Format: "id,x,y,source,destination"
         parts = msg.split(',')
-        if len(parts) != 6:
+        if not parts:
             return
         
-        vid, x, y, source, dest, color = parts
-        x = float(x)
-        y = float(y)
+        if parts[0] == "LIGHT" and len(parts) == 3:
+            ns_status = parts[1].lower() == 'true'
+            ew_status = parts[2].lower() == 'true'
+            self.master.after(0, self.update_traffic_lights, ns_status, ew_status)
         
-        # Mise à jour de l'affichage dans le thread principal
-        self.master.after(0, self.update_vehicle, vid, x, y, color)
+        elif len(parts) == 6:
+
+            vid, x, y, source, dest, color = parts
+            x = float(x)
+            y = float(y)
+        
+            # Mise à jour de l'affichage dans le thread principal
+            self.master.after(0, self.update_vehicle, vid, x, y, color)
 
     def update_vehicle(self, vid, x, y,color):
         # Ajustement pour Tkinter (origine en haut à gauche)

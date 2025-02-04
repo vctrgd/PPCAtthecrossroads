@@ -1,7 +1,7 @@
 import time
 import os
-import multiprocessing
 import signal
+
 
 def manage_lights(lights_dict):
     def handler(sig, frame):
@@ -23,7 +23,7 @@ def manage_lights(lights_dict):
     signal.signal(signal.SIGUSR1, handler)
     signal.signal(signal.SIGUSR2, handler)
 
-    
+
     while True:
         # Lire l'état actuel des feux
         northsouth = lights_dict["northsouth"]
@@ -32,7 +32,5 @@ def manage_lights(lights_dict):
         lights_dict["eastwest"] = northsouth  # L'opposé de northsouth
         print(f"🔄 Changement des feux : NS = {lights_dict['northsouth']}, EW = {lights_dict['eastwest']}")
 
-        time.sleep(6)  # Attendre 5 secondes avant le changement
-        
-
+        time.sleep(6)  
         

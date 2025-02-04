@@ -30,6 +30,29 @@ def send_to_display(vehicle_id, x, y, source, destination,color):
                 continue
             print("Impossible de se connecter au display.")
 
+def send_light_status(lights_dict):
+    HOST = 'localhost'
+    PORT = 65432
+    s= None
+    while True:
+        try:
+            if not s:
+                s  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((HOST, PORT))
+                          
+            msg = f"LIGHT,{lights_dict['northsouth']},{lights_dict['eastwest']};".encode()
+            s.sendall(msg)
+            time.sleep(0.3)
+
+        except Exception as e:
+            print(f"Erreur connexion: {e}")
+            if s:
+                s.close()
+            s = None
+            time.sleep(1)
+
+            time.sleep(1)
+
 def generate_random_color():
     """Génère une couleur hexadécimale aléatoire."""
     return "#{:06x}".format(random.randint(0, 0xFFFFFF))
@@ -109,6 +132,11 @@ def coordinate(mqList, lights_dict, lights_pid):
     """Lance un thread pour chaque file de message."""
     roads = ["North", "South", "East", "West"]
     threads = []
+    
+
+    threading.Thread(target=send_light_status, args=(lights_dict,)).start()
+  
+
     for mq, road in zip(mqList, roads):
         thread = threading.Thread(target=process_single_queue, args=(mq, road, lights_dict, lights_pid))
         thread.start()
