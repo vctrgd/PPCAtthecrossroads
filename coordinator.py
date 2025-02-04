@@ -67,6 +67,7 @@ def process_single_queue(mq, direction, lights_dict, lights_pid):
     }
     vehicleStack = list()
     
+    
     # Connexion socket persistante
     HOST = 'localhost'
     PORT = 65432
@@ -81,6 +82,7 @@ def process_single_queue(mq, direction, lights_dict, lights_pid):
             is_priority = is_priority.lower() == "true" if isinstance(is_priority, str) else is_priority
             vehicle = Vehicle(vehicle_id, is_priority, source, destination, is_waiting)
             vehicleStack.append(vehicle) 
+            
 
             # Logique de priorité
             if vehicle.isPriority==True and traffic_rules[vehicle.source]=="northsouth":
@@ -90,12 +92,23 @@ def process_single_queue(mq, direction, lights_dict, lights_pid):
 
         except sysv_ipc.BusyError:
             pass  # Pas de véhicule pour l'instant
-
+        
+        
         if lights_dict[traffic_rules[direction]]:  # Vérifie si le feu est vert
             while vehicleStack:
                 currentVehicle = vehicleStack.pop()
-                currentVehicle.isWaiting = False
+                entry_pos = crossRoad.ENTRY_POINTS[currentVehicle.source]
                 color = generate_random_color()
+                msg = f"{currentVehicle.vehicle_id},{entry_pos[0]},{entry_pos[1]},{currentVehicle.source},{currentVehicle.destination},{color};".encode()
+                try:
+                    s.sendall(msg)
+                except (BrokenPipeError, ConnectionResetError):
+                    s.close()
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.connect((HOST, PORT))
+                    s.sendall(msg)
+
+                currentVehicle.isWaiting = False
                 print(f"🚗 Vehicle {currentVehicle.vehicle_id} passed (Source: {currentVehicle.source} ➝ Destination: {currentVehicle.destination})")
                 
                 # Simulation de mouvement
