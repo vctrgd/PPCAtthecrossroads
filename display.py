@@ -66,20 +66,22 @@ class TrafficDisplay:
     def update_vehicle(self, vid, x, y,color):
         # Ajustement pour Tkinter (origine en haut à gauche)
         y_tk = 600 - y
-        
+        size = 8
+
         if vid not in self.vehicles:
             self.vehicles[vid] = self.canvas.create_rectangle(
-                x-10, y_tk-10, x+10, y_tk+10, fill=color , outline=''
+                x-size, y_tk-size, x+size, y_tk+size, fill=color , outline='black', width=2
             )
         else:
             self.canvas.itemconfig(
                 self.vehicles[vid], 
-                fill=color  # Changer la couleur si besoin
+                fill=color  
             )
             self.canvas.coords(
                 self.vehicles[vid],
-                x-10, y_tk-10, x+10, y_tk+10
+                x-size, y_tk-size, x+size, y_tk+size
             )
+        self.canvas.update_idletasks()
 
 def run_display():
     root = tk.Tk()

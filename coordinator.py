@@ -44,6 +44,11 @@ def process_single_queue(mq, direction, lights_dict, lights_pid):
     }
     vehicleStack = list()
     
+    # Connexion socket persistante
+    HOST = 'localhost'
+    PORT = 65432
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
     
     while True:
         try:
@@ -73,11 +78,32 @@ def process_single_queue(mq, direction, lights_dict, lights_pid):
                 # Simulation de mouvement
                 source_pos = crossRoad.ENTRY_POINTS[currentVehicle.source]
                 dest_pos = crossRoad.DESTINATION_POINTS[currentVehicle.destination]
-                for step in range(10):
-                    x = source_pos[0] + (dest_pos[0] - source_pos[0]) * (step/9)
-                    y = source_pos[1] + (dest_pos[1] - source_pos[1]) * (step/9)
-                    send_to_display(currentVehicle.vehicle_id, x, y, currentVehicle.source, currentVehicle.destination,color)
-                    time.sleep(0.05)
+                center = (400, 300)  # Centre du carrefour
+                steps = 20
+
+                for step in range(steps):
+                    if step < steps // 2:
+                        progress = step / (steps // 2 - 1)
+                        x = source_pos[0] + (center[0] - source_pos[0]) * progress
+                        y = source_pos[1] + (center[1] - source_pos[1]) * progress
+                    else:
+                        progress = (step - steps // 2) / (steps // 2 - 1)
+                        x = center[0] + (dest_pos[0] - center[0]) * progress
+                        y = center[1] + (dest_pos[1] - center[1]) * progress
+                
+                    # Utilisation du socket persistant
+                    msg = f"{currentVehicle.vehicle_id},{x},{y},{currentVehicle.source},{currentVehicle.destination},{color};".encode()
+                    try:
+                        s.sendall(msg)
+                    except (BrokenPipeError, ConnectionResetError):
+                        s.close()
+                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        s.connect((HOST, PORT))
+                        s.sendall(msg)
+                
+                
+                    time.sleep(0.03)  
+
 
 def coordinate(mqList, lights_dict, lights_pid):
     """Lance un thread pour chaque file de message."""
